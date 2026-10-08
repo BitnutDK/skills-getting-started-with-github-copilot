@@ -24,8 +24,54 @@ document.addEventListener("DOMContentLoaded", () => {
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <p class="activity-availability"><strong>Availability:</strong> <span class="spots-left" data-max-participants="${details.max_participants}">${spotsLeft} spots left</span></p>
         `;
+
+        const participantsSection = document.createElement("div");
+        participantsSection.className = "participants-section";
+
+        const participantsHeading = document.createElement("h5");
+        participantsHeading.textContent = "Participants";
+
+        const participantCount = document.createElement("span");
+        participantCount.className = "participant-count";
+        participantCount.textContent = details.participants.length;
+        participantsHeading.appendChild(participantCount);
+        participantsSection.appendChild(participantsHeading);
+
+        if (details.participants.length > 0) {
+          const participantsList = document.createElement("ul");
+          participantsList.className = "participant-list";
+
+          details.participants.forEach((email) => {
+            const participant = document.createElement("li");
+
+            const participantEmail = document.createElement("span");
+            participantEmail.className = "participant-email";
+            participantEmail.textContent = email;
+
+            const removeButton = document.createElement("button");
+            removeButton.className = "remove-participant";
+            removeButton.type = "button";
+            removeButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" /></svg>';
+            removeButton.title = "Remove participant";
+            removeButton.setAttribute("aria-label", `Remove ${email} from ${name}`);
+            removeButton.dataset.activity = name;
+            removeButton.dataset.email = email;
+
+            participant.append(participantEmail, removeButton);
+            participantsList.appendChild(participant);
+          });
+
+          participantsSection.appendChild(participantsList);
+        } else {
+          const emptyMessage = document.createElement("p");
+          emptyMessage.className = "no-participants";
+          emptyMessage.textContent = "No participants yet";
+          participantsSection.appendChild(emptyMessage);
+        }
+
+        activityCard.appendChild(participantsSection);
 
         activitiesList.appendChild(activityCard);
 
@@ -40,6 +86,54 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error fetching activities:", error);
     }
   }
+
+  activitiesList.addEventListener("click", async (event) => {
+    const removeButton = event.target.closest(".remove-participant");
+    if (!removeButton) return;
+
+    removeButton.disabled = true;
+    const { activity, email } = removeButton.dataset;
+
+    try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(activity)}/signup?email=${encodeURIComponent(email)}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        const result = await response.json();
+        messageDiv.textContent = result.detail || "Could not remove participant";
+        messageDiv.className = "error";
+        messageDiv.classList.remove("hidden");
+        removeButton.disabled = false;
+        return;
+      }
+
+      const activityCard = removeButton.closest(".activity-card");
+      const participantsList = removeButton.closest(".participant-list");
+      const participantsSection = removeButton.closest(".participants-section");
+      removeButton.closest("li").remove();
+
+      const remainingParticipants = participantsList.querySelectorAll("li").length;
+      activityCard.querySelector(".participant-count").textContent = remainingParticipants;
+      const spotsLeft = activityCard.querySelector(".spots-left");
+      spotsLeft.textContent = `${Number(spotsLeft.dataset.maxParticipants) - remainingParticipants} spots left`;
+
+      if (remainingParticipants === 0) {
+        participantsList.remove();
+        const emptyMessage = document.createElement("p");
+        emptyMessage.className = "no-participants";
+        emptyMessage.textContent = "No participants yet";
+        participantsSection.appendChild(emptyMessage);
+      }
+    } catch (error) {
+      messageDiv.textContent = "Failed to remove participant. Please try again.";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+      removeButton.disabled = false;
+      console.error("Error removing participant:", error);
+    }
+  });
 
   // Handle form submission
   signupForm.addEventListener("submit", async (event) => {
