@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p class="activity-availability"><strong>Availability:</strong> <span class="spots-left">${spotsLeft} spots left</span></p>
+          <p class="activity-availability"><strong>Availability:</strong> <span class="spots-left" data-max-participants="${details.max_participants}">${spotsLeft} spots left</span></p>
         `;
 
         const participantsSection = document.createElement("div");
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const removeButton = document.createElement("button");
             removeButton.className = "remove-participant";
             removeButton.type = "button";
-            removeButton.textContent = "×";
+            removeButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" /></svg>';
             removeButton.title = "Remove participant";
             removeButton.setAttribute("aria-label", `Remove ${email} from ${name}`);
             removeButton.dataset.activity = name;
@@ -116,8 +116,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const remainingParticipants = participantsList.querySelectorAll("li").length;
       activityCard.querySelector(".participant-count").textContent = remainingParticipants;
-      activityCard.querySelector(".spots-left").textContent =
-        `${Number(activityCard.querySelector(".spots-left").textContent.split(" ")[0]) + 1} spots left`;
+      const spotsLeft = activityCard.querySelector(".spots-left");
+      spotsLeft.textContent = `${Number(spotsLeft.dataset.maxParticipants) - remainingParticipants} spots left`;
 
       if (remainingParticipants === 0) {
         participantsList.remove();

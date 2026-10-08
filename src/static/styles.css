@@ -134,8 +134,16 @@ section h3 {
   border-radius: 4px;
   background: transparent;
   color: #8f3b3b;
-  font-size: 1.25rem;
-  line-height: 1;
+}
+
+.participant-list .remove-participant svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .participant-list .remove-participant:hover {
